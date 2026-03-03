@@ -7,21 +7,16 @@ convert_geosite_category() {
     echo "Converting geosite category: $category"
     ./temp/mosdns v2dat unpack-domain -o rules "temp/geosite.dat:$category"
     # 重命名文件
-    mv "rules/geosite_${category}.txt" "rules/${category}.txt"
+    mv "rules/geosite_${category}.txt" "data/geosite_${category}.txt"
 }
 
 # 要转换的类别列表
 categories=(
-    "category-entertainment"
-    "discoveryplus"
-    "netflix"
-    "disney"
-    "hbo"
-    "dazn"
-    "bahamut"
-    "bilibili"
-    "viu"
-    "category-porn"
+    "apple-cn"
+    "icloud"
+    "google-cn"
+    "tld-cn"
+    "cn"
 )
 
 # 清理并创建规则目录
