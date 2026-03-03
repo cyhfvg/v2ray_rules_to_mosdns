@@ -18,6 +18,7 @@ jobs:
       - name: Download dat files and mosdns
         run: |
           wget https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat -O temp/geosite.dat
+          wget https://raw.githubusercontent.com/Loyalsoldier/geoip/release/geoip-only-cn-private.dat -O temp/geoip.dat
           wget https://github.com/IrineSistiana/mosdns/releases/download/v4.5.3/mosdns-linux-amd64.zip -O temp/mosdns.zip
           cd temp && unzip -o mosdns.zip && chmod +x mosdns
           
