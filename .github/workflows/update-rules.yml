@@ -13,7 +13,7 @@ jobs:
       - name: Setup directories
         run: |
           mkdir -p temp
-          mkdir -p rules
+          mkdir -p data
           
       - name: Download dat files and mosdns
         run: |
@@ -27,18 +27,18 @@ jobs:
           
       - name: Update timestamp
         run: |
-          date +"%Y-%m-%d %H:%M:%S UTC" > rules/last_updated.txt
+          date +"%Y-%m-%d %H:%M:%S UTC" > data/last_updated.txt
           
       - name: Commit changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add rules/
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update rules: $(date +%Y-%m-%d)"
+          git add data/
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update data: $(date +%Y-%m-%d)"
           
       - name: Push changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/ypxun/v2ray_rules_to_mosdns.git
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/cyhfvg/v2ray_rules_to_mosdns.git
           git push
