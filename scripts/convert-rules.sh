@@ -20,16 +20,12 @@ trap cleanup EXIT
 
 # Hard-coded categories (no args by design).
 categories=(
-  "category-entertainment"
-  "discoveryplus"
-  "netflix"
-  "disney"
-  "hbo"
-  "dazn"
-  "bahamut"
-  "bilibili"
-  "viu"
-  "category-porn"
+  "cn"
+  "apple-cn"
+  "icloud"
+  "google-cn"
+  "tld-cn"
+  "geolocation-!cn"
 )
 
 # Preconditions.
