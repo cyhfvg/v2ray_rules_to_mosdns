@@ -4,12 +4,15 @@ set -euo pipefail
 # This script is designed for GitHub Actions workflow.
 # It expects:
 #   - temp/geosite.dat exists (downloaded by workflow)
+#   - temp/geoip.dat exists (downloaded by workflow)
 #   - temp/mosdns exists and is executable (unzipped by workflow)
-# It outputs category txt files to:
+# It outputs txt files to:
+#   - data/geoip_cn.txt
 #   - data/geosite_<category>.txt
 
 MOSDNS_BIN="temp/mosdns"
 GEOSITE_DAT="temp/geosite.dat"
+GEOIP_DAT="temp/geoip.dat"
 OUT_DIR="data"
 STAGE_DIR="$(mktemp -d)"
 
@@ -18,8 +21,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Hard-coded categories (no args by design).
-categories=(
+# Hard-coded geosite entries (no args by design).
+# These are v2ray geosite entry names (NOT filenames).
+geosite_entries=(
   "cn"
   "apple-cn"
   "icloud"
@@ -29,43 +33,51 @@ categories=(
 )
 
 # Preconditions.
-if [[ ! -f "${GEOSITE_DAT}" ]]; then
-  echo "ERROR: missing ${GEOSITE_DAT}" >&2
-  exit 1
-fi
-
 if [[ ! -x "${MOSDNS_BIN}" ]]; then
   echo "ERROR: missing or not executable: ${MOSDNS_BIN}" >&2
   exit 1
 fi
 
+if [[ ! -f "${GEOSITE_DAT}" ]]; then
+  echo "ERROR: missing ${GEOSITE_DAT}" >&2
+  exit 1
+fi
+
+if [[ ! -f "${GEOIP_DAT}" ]]; then
+  echo "ERROR: missing ${GEOIP_DAT}" >&2
+  exit 1
+fi
+
 mkdir -p "${OUT_DIR}"
 
-echo "INFO: converting geosite categories -> ${OUT_DIR}"
+echo "INFO: generating geoip_cn.txt"
+# Unpack CN IP set from geoip.dat
+"${MOSDNS_BIN}" v2dat unpack-ip -o "${STAGE_DIR}" "${GEOIP_DAT}:cn"
 
-convert_one() {
-  local category="$1"
-  echo "INFO: converting: ${category}"
+if [[ ! -s "${STAGE_DIR}/geoip_cn.txt" ]]; then
+  echo "ERROR: expected output not found or empty: ${STAGE_DIR}/geoip_cn.txt" >&2
+  ls -lah "${STAGE_DIR}" >&2 || true
+  exit 1
+fi
 
-  # mosdns v2dat subcommand:
-  # mosdns v2dat unpack-domain -o <dir> "<datfile>:<category>"
-  "${MOSDNS_BIN}" v2dat unpack-domain -o "${STAGE_DIR}" "${GEOSITE_DAT}:${category}"
+echo "INFO: generating geosite entries -> ${OUT_DIR}"
+for entry in "${geosite_entries[@]}"; do
+  echo "INFO: converting geosite entry: ${entry}"
+  "${MOSDNS_BIN}" v2dat unpack-domain -o "${STAGE_DIR}" "${GEOSITE_DAT}:${entry}"
 
-  # v2dat outputs: geosite_<category>.txt in the output dir.
-  local out_file="${STAGE_DIR}/geosite_${category}.txt"
+  out_file="${STAGE_DIR}/geosite_${entry}.txt"
   if [[ ! -s "${out_file}" ]]; then
     echo "ERROR: expected output not found or empty: ${out_file}" >&2
     ls -lah "${STAGE_DIR}" >&2 || true
     exit 1
   fi
-}
-
-for c in "${categories[@]}"; do
-  convert_one "${c}"
 done
 
-# Replace only these generated files; keep other data/*.txt (e.g., last_updated.txt) intact.
-rm -f "${OUT_DIR}"/geosite_*.txt || true
-mv -f "${STAGE_DIR}"/geosite_*.txt "${OUT_DIR}/"
+# Replace only our generated files; keep other data/* intact (e.g., last_updated.txt).
+rm -f "${OUT_DIR}/geoip_cn.txt" || true
+rm -f "${OUT_DIR}/geosite_"*.txt || true
+
+mv -f "${STAGE_DIR}/geoip_cn.txt" "${OUT_DIR}/geoip_cn.txt"
+mv -f "${STAGE_DIR}/geosite_"*.txt "${OUT_DIR}/"
 
 echo "INFO: conversion completed."
